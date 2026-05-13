@@ -3,18 +3,19 @@ import 'package:flutter/material.dart';
 import 'layout.dart';
 
 void main() {
-  runApp(const TaskApp());
+  runApp(const AppTarefas());
 }
 
-class TaskApp extends StatelessWidget {
-  const TaskApp({super.key});
+class AppTarefas extends StatelessWidget {
+  const AppTarefas({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Lista de Tarefas',
       theme: ThemeData(primarySwatch: Colors.blue),
-      home: const TaskListPage(),
+      home: const PaginaListaTarefas(),
     );
   }
 }
+

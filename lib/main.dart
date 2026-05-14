@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
+import 'cadastrar.dart';
 import 'layout.dart';
+import 'tarefa.dart';
 
 void main() {
   runApp(const AppTarefas());
@@ -14,7 +16,23 @@ class AppTarefas extends StatelessWidget {
     return MaterialApp(
       title: 'Lista de Tarefas',
       theme: ThemeData(primarySwatch: Colors.blue),
-      home: const PaginaListaTarefas(),
+      initialRoute: '/',
+      onGenerateRoute: (RouteSettings settings) {
+        switch (settings.name) {
+          case '/':
+            return MaterialPageRoute<dynamic>(
+              builder: (BuildContext context) => const PaginaListaTarefas(),
+              settings: settings,
+            );
+          case '/adicionar':
+            return MaterialPageRoute<Tarefa>(
+              builder: (BuildContext context) => const PaginaAdicionarTarefa(),
+              settings: settings,
+            );
+          default:
+            return null;
+        }
+      },
     );
   }
 }

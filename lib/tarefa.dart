@@ -6,5 +6,5 @@ class Tarefa {
     required this.titulo,
     required this.descricao,
   });
-  // Representar uma tarefa com título e descrição
+  // Modelo de dados, representa as tarefas do app
 }

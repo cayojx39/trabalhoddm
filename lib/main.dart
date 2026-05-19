@@ -17,6 +17,7 @@ class AppTarefas extends StatelessWidget {
       title: 'Lista de Tarefas',
       theme: ThemeData(primarySwatch: Colors.blue),
       initialRoute: '/',
+      // Widget de navegação: define rotas e páginas do app
       onGenerateRoute: (RouteSettings settings) {
         switch (settings.name) {
           case '/':

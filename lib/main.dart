@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'cadastrar.dart';
 import 'layout.dart';
+import 'resumo.dart';
 import 'tarefa.dart';
 
 void main() {
@@ -15,9 +16,12 @@ class AppTarefas extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Lista de Tarefas',
-      theme: ThemeData(primarySwatch: Colors.blue),
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+        useMaterial3: true,
+      ),
       initialRoute: '/',
-      // Widget de navegação: define rotas e páginas do app
       onGenerateRoute: (RouteSettings settings) {
         switch (settings.name) {
           case '/':
@@ -28,6 +32,14 @@ class AppTarefas extends StatelessWidget {
           case '/adicionar':
             return MaterialPageRoute<Tarefa>(
               builder: (BuildContext context) => const PaginaAdicionarTarefa(),
+              settings: settings,
+            );
+          case '/resumo':
+            final List<Tarefa> tarefas = settings.arguments is List<Tarefa>
+                ? settings.arguments as List<Tarefa>
+                : <Tarefa>[];
+            return MaterialPageRoute<dynamic>(
+              builder: (BuildContext context) => PaginaResumoTarefas(tarefas: tarefas),
               settings: settings,
             );
           default:

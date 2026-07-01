@@ -11,18 +11,15 @@ class PaginaListaTarefas extends StatefulWidget {
 
 class _EstadoPaginaListaTarefas extends State<PaginaListaTarefas> {
   final List<Tarefa> _tarefas = <Tarefa>[];
-  // Lista de dados do app, guarda o estado das tarefas
 
   void _abrirPaginaAdicionar() {
     final ScaffoldMessengerState mensageiro = ScaffoldMessenger.of(context);
-    // Navegação: abrir rota para adicionar uma nova tarefa
     Navigator.pushNamed<Tarefa>(context, '/adicionar').then((novaTarefa) {
       if (novaTarefa == null) return;
 
       setState(() {
         _tarefas.add(novaTarefa);
       });
-      // Navegação: adicionar a nova tarefa à lista e atualizar a tela
 
       mensageiro.showSnackBar(
         SnackBar(
@@ -33,29 +30,65 @@ class _EstadoPaginaListaTarefas extends State<PaginaListaTarefas> {
     });
   }
 
+  void _alternarConclusao(Tarefa tarefa) {
+    setState(() {
+      final int index = _tarefas.indexWhere((item) => item.titulo == tarefa.titulo && item.descricao == tarefa.descricao);
+      if (index >= 0) {
+        _tarefas[index] = Tarefa(
+          titulo: tarefa.titulo,
+          descricao: tarefa.descricao,
+          prioridade: tarefa.prioridade,
+          horasEstimadas: tarefa.horasEstimadas,
+          concluida: !tarefa.concluida,
+        );
+      }
+    });
+  }
+
   Widget _construirItemTarefa(Tarefa tarefa, int indice) {
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      elevation: 3,
-      // Widget de layout: card que envolve cada item de tarefa
-      child: ListTile(
-        // Widget de layout: item de lista formatado
-        title: Row(
-          children: <Widget>[
-            Expanded(
-              // Widget de layout: expande o texto dentro da linha
-              child: Text(
-                tarefa.titulo,
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+      margin: const EdgeInsets.symmetric(vertical: 6),
+      child: Card(
+        elevation: 3,
+        child: ListTile(
+          leading: CircleAvatar(
+            backgroundColor: tarefa.corPrioridade.withValues(alpha: 0.15),
+            child: Icon(Icons.assignment_turned_in, color: tarefa.corPrioridade),
+          ),
+          title: Text(
+            tarefa.titulo,
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              decoration: tarefa.concluida ? TextDecoration.lineThrough : null,
             ),
-          ],
-        ),
-        subtitle: Padding(
-          padding: const EdgeInsets.only(top: 6),
-          child: Text(tarefa.descricao),
+          ),
+          subtitle: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              const SizedBox(height: 4),
+              Text(tarefa.descricao),
+              const SizedBox(height: 4),
+              Text('${tarefa.prioridadeTexto} • ${tarefa.horasEstimadas}h'),
+            ],
+          ),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Chip(
+                label: Text(tarefa.concluida ? 'Concluída' : 'Pendente'),
+                backgroundColor: tarefa.concluida ? Colors.green.shade100 : Colors.orange.shade100,
+              ),
+              const SizedBox(width: 8),
+              IconButton(
+                tooltip: tarefa.concluida ? 'Marcar como pendente' : 'Marcar como concluída',
+                onPressed: () => _alternarConclusao(tarefa),
+                icon: Icon(tarefa.concluida ? Icons.undo : Icons.check_circle_outline),
+                color: tarefa.concluida ? Colors.orange : Colors.green,
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -63,50 +96,78 @@ class _EstadoPaginaListaTarefas extends State<PaginaListaTarefas> {
 
   @override
   Widget build(BuildContext context) {
+    final int totalHoras = _tarefas.fold<int>(0, (soma, tarefa) => soma + tarefa.horasEstimadas);
+    final int tarefasConcluidas = _tarefas.where((tarefa) => tarefa.concluida).length;
+
     return Scaffold(
-      // Widget de layout: estrutura principal da página
       appBar: AppBar(
-        // Widget de layout: barra de navegação superior
-        title: const Text('Ver Tarefas'),
+        title: const Text('Gerenciar Tarefas'),
         centerTitle: true,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        // Widget de layout: espaçamento interno da página
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: <Widget>[
-            const Text(
-              'Minhas tarefas',
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 12),
-            const Text('Toque em um item para ver detalhes. Use o + para adicionar uma nova tarefa.'),
-            const SizedBox(height: 16),
-            Expanded(
-              // Widget de layout: preencher o restante do espaço disponível
-              child: _tarefas.isEmpty
-                  ? const Center(
-                      // Widget de layout: mostrar mensagem centralizada
-                      child: Text('Nenhuma tarefa cadastrada ainda.'),
-                    )
-                  : ListView.separated(
-                      // Widget de layout: lista rolável de tarefas
-                      itemCount: _tarefas.length,
-                      separatorBuilder: (BuildContext context, int index) => const Divider(),
-                      itemBuilder: (BuildContext context, int index) {
-                        return _construirItemTarefa(_tarefas[index], index);
-                       },
-                    ),
-                    // Mostrar a lista de tarefas ou uma mensagem se estiver vazia
-            ),
-          ],
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFFE8F5E9), Color(0xFFF8F9FF)],
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      const Text(
+                        'Resumo rápido',
+                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 8),
+                      Text('Tarefas cadastradas: ${_tarefas.length}'),
+                      Text('Horas estimadas: $totalHoras h'),
+                      Text('Tarefas concluídas: $tarefasConcluidas'),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.pushNamed(context, '/resumo', arguments: _tarefas);
+                },
+                icon: const Icon(Icons.insights),
+                label: const Text('Resumo'),
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                'Minhas tarefas',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              Expanded(
+                child: _tarefas.isEmpty
+                    ? const Center(
+                        child: Text('Nenhuma tarefa cadastrada ainda.'),
+                      )
+                    : ListView.builder(
+                        itemCount: _tarefas.length,
+                        itemBuilder: (BuildContext context, int index) {
+                          return _construirItemTarefa(_tarefas[index], index);
+                        },
+                      ),
+              ),
+            ],
+          ),
         ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _abrirPaginaAdicionar,
         tooltip: 'Adicionar tarefa',
-        // Outro widget: botão flutuante para iniciar o fluxo de navegação
         child: const Icon(Icons.add),
       ),
     );

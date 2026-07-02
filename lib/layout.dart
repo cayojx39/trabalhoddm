@@ -46,51 +46,12 @@ class _EstadoPaginaListaTarefas extends State<PaginaListaTarefas> {
   }
 
   Widget _construirItemTarefa(Tarefa tarefa, int indice) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-      margin: const EdgeInsets.symmetric(vertical: 6),
-      child: Card(
-        elevation: 3,
-        child: ListTile(
-          leading: CircleAvatar(
-            backgroundColor: tarefa.corPrioridade.withValues(alpha: 0.15),
-            child: Icon(Icons.assignment_turned_in, color: tarefa.corPrioridade),
-          ),
-          title: Text(
-            tarefa.titulo,
-            style: TextStyle(
-              fontWeight: FontWeight.w600,
-              decoration: tarefa.concluida ? TextDecoration.lineThrough : null,
-            ),
-          ),
-          subtitle: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              const SizedBox(height: 4),
-              Text(tarefa.descricao),
-              const SizedBox(height: 4),
-              Text('${tarefa.prioridadeTexto} • ${tarefa.horasEstimadas}h'),
-            ],
-          ),
-          trailing: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              Chip(
-                label: Text(tarefa.concluida ? 'Concluída' : 'Pendente'),
-                backgroundColor: tarefa.concluida ? Colors.green.shade100 : Colors.orange.shade100,
-              ),
-              const SizedBox(width: 8),
-              IconButton(
-                tooltip: tarefa.concluida ? 'Marcar como pendente' : 'Marcar como concluída',
-                onPressed: () => _alternarConclusao(tarefa),
-                icon: Icon(tarefa.concluida ? Icons.undo : Icons.check_circle_outline),
-                color: tarefa.concluida ? Colors.orange : Colors.green,
-              ),
-            ],
-          ),
-        ),
-      ),
+    return _ItemTarefaAnimado(
+      tarefa: tarefa,
+      onToggle: () => _alternarConclusao(tarefa),
+      onTap: () {
+        Navigator.pushNamed(context, '/detalhes', arguments: tarefa);
+      },
     );
   }
 
@@ -169,6 +130,98 @@ class _EstadoPaginaListaTarefas extends State<PaginaListaTarefas> {
         onPressed: _abrirPaginaAdicionar,
         tooltip: 'Adicionar tarefa',
         child: const Icon(Icons.add),
+      ),
+    );
+  }
+}
+
+class _ItemTarefaAnimado extends StatefulWidget {
+  final Tarefa tarefa;
+  final VoidCallback onToggle;
+  final VoidCallback onTap;
+
+  const _ItemTarefaAnimado({
+    required this.tarefa,
+    required this.onToggle,
+    required this.onTap,
+  });
+
+  @override
+  State<_ItemTarefaAnimado> createState() => _ItemTarefaAnimadoState();
+}
+
+class _ItemTarefaAnimadoState extends State<_ItemTarefaAnimado>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 999),
+    );
+    _scaleAnimation = Tween<double>(begin: 0.6, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeOutBack),
+    );
+    _controller.forward();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ScaleTransition(
+      scale: _scaleAnimation,
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 6),
+        child: Card(
+          elevation: 3,
+          child: ListTile(
+            onTap: widget.onTap,
+            leading: CircleAvatar(
+              backgroundColor: widget.tarefa.corPrioridade.withValues(alpha: 0.15),
+              child: Icon(Icons.assignment_turned_in, color: widget.tarefa.corPrioridade),
+            ),
+            title: Text(
+              widget.tarefa.titulo,
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                decoration: widget.tarefa.concluida ? TextDecoration.lineThrough : null,
+              ),
+            ),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                const SizedBox(height: 4),
+                Text(widget.tarefa.descricao),
+                const SizedBox(height: 4),
+                Text('${widget.tarefa.prioridadeTexto} • ${widget.tarefa.horasEstimadas}h'),
+              ],
+            ),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                Chip(
+                  label: Text(widget.tarefa.concluida ? 'Concluída' : 'Pendente'),
+                  backgroundColor: widget.tarefa.concluida ? Colors.green.shade100 : Colors.orange.shade100,
+                ),
+                const SizedBox(width: 8),
+                IconButton(
+                  tooltip: widget.tarefa.concluida ? 'Marcar como pendente' : 'Marcar como concluída',
+                  onPressed: widget.onToggle,
+                  icon: Icon(widget.tarefa.concluida ? Icons.undo : Icons.check_circle_outline),
+                  color: widget.tarefa.concluida ? Colors.orange : Colors.green,
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'cadastrar.dart';
+import 'detalhes_tarefa.dart';
 import 'layout.dart';
 import 'resumo.dart';
 import 'tarefa.dart';
@@ -40,6 +41,14 @@ class AppTarefas extends StatelessWidget {
                 : <Tarefa>[];
             return MaterialPageRoute<dynamic>(
               builder: (BuildContext context) => PaginaResumoTarefas(tarefas: tarefas),
+              settings: settings,
+            );
+          case '/detalhes':
+            final Tarefa? tarefa = settings.arguments is Tarefa ? settings.arguments as Tarefa : null;
+            return MaterialPageRoute<dynamic>(
+              builder: (BuildContext context) => tarefa == null
+                  ? const Scaffold(body: Center(child: Text('Tarefa não encontrada.')))
+                  : PaginaDetalhesTarefa(tarefa: tarefa),
               settings: settings,
             );
           default:

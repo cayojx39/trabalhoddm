@@ -15,6 +15,7 @@ class PaginaDetalhesTarefa extends StatelessWidget {
         centerTitle: true,
       ),
       body: Container(
+        // Esta parte organiza a aparência da tela de detalhes da tarefa.
         padding: const EdgeInsets.all(20),
         decoration: const BoxDecoration(
           gradient: LinearGradient(

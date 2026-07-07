@@ -40,14 +40,18 @@ class _PaginaResumoTarefasState extends State<PaginaResumoTarefas>
 
   @override
   Widget build(BuildContext context) {
+    // Este cálculo mostra o total de horas das tarefas cadastradas.
     final int totalHoras = widget.tarefas.fold<int>(0, (soma, tarefa) => soma + tarefa.horasEstimadas);
+    // Este cálculo conta quantas tarefas têm prioridade alta.
     final int tarefasAlta = widget.tarefas.where((tarefa) => tarefa.prioridade == Prioridade.alta).length;
     final int concluidas = widget.tarefas.where((tarefa) => tarefa.concluida).length;
+    // Este cálculo mostra o percentual de tarefas concluídas.
     final double percentual = widget.tarefas.isEmpty ? 0 : (concluidas / widget.tarefas.length) * 100;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Resumo das Tarefas'), centerTitle: true),
       body: Container(
+        // Esta parte define a estilização da tela de resumo.
         padding: const EdgeInsets.all(16),
         decoration: const BoxDecoration(
           gradient: LinearGradient(
@@ -57,8 +61,10 @@ class _PaginaResumoTarefasState extends State<PaginaResumoTarefas>
           ),
         ),
         child: FadeTransition(
+          // Esta animação usa FadeTransition para mostrar a tela aos poucos.
           opacity: _fadeAnimation,
           child: SlideTransition(
+            // Esta animação usa SlideTransition para a tela deslizar de baixo para cima.
             position: _slideAnimation,
             child: ListView(
               children: <Widget>[

@@ -12,6 +12,8 @@ class PaginaListaTarefas extends StatefulWidget {
 class _EstadoPaginaListaTarefas extends State<PaginaListaTarefas> {
   final List<Tarefa> _tarefas = <Tarefa>[];
 
+  // Este trecho faz o processamento de adicionar e organizar as tarefas.
+
   void _abrirPaginaAdicionar() {
     final ScaffoldMessengerState mensageiro = ScaffoldMessenger.of(context);
     Navigator.pushNamed<Tarefa>(context, '/adicionar').then((novaTarefa) {
@@ -57,7 +59,9 @@ class _EstadoPaginaListaTarefas extends State<PaginaListaTarefas> {
 
   @override
   Widget build(BuildContext context) {
+    // soma as horas estimadas das tarefas cadastradas.
     final int totalHoras = _tarefas.fold<int>(0, (soma, tarefa) => soma + tarefa.horasEstimadas);
+    // quantas tarefas já foram concluídas.
     final int tarefasConcluidas = _tarefas.where((tarefa) => tarefa.concluida).length;
 
     return Scaffold(
@@ -66,6 +70,7 @@ class _EstadoPaginaListaTarefas extends State<PaginaListaTarefas> {
         centerTitle: true,
       ),
       body: Container(
+        // Esta parte cria a estilização visual da tela com cores e layout.
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
@@ -152,6 +157,7 @@ class _ItemTarefaAnimado extends StatefulWidget {
 
 class _ItemTarefaAnimadoState extends State<_ItemTarefaAnimado>
     with SingleTickerProviderStateMixin {
+  // Esta animação usa ScaleTransition para fazer a tarefa crescer ao aparecer.
   late final AnimationController _controller;
   late final Animation<double> _scaleAnimation;
 

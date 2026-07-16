@@ -16,7 +16,6 @@ class _EstadoPaginaAdicionarTarefa extends State<PaginaAdicionarTarefa> {
   Prioridade _prioridade = Prioridade.media;
 
   void _salvar() {
-    // Este método processa os dados digitados para criar uma nova tarefa.
     final int horas = int.tryParse(_horas.text) ?? 1;
     final Tarefa tarefa = Tarefa(
       titulo: _titulo.text,

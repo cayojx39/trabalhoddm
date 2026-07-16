@@ -4,6 +4,7 @@ import 'cadastrar.dart';
 import 'detalhes_tarefa.dart';
 import 'layout.dart';
 import 'resumo.dart';
+import 'splash_screen.dart';
 import 'tarefa.dart';
 
 void main() {
@@ -22,12 +23,17 @@ class AppTarefas extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
         useMaterial3: true,
       ),
-      initialRoute: '/',
+      initialRoute: '/splash',
       onGenerateRoute: (RouteSettings settings) {
         switch (settings.name) {
           case '/':
             return MaterialPageRoute<dynamic>(
               builder: (BuildContext context) => const PaginaListaTarefas(),
+              settings: settings,
+            );
+          case '/splash':
+            return MaterialPageRoute<dynamic>(
+              builder: (BuildContext context) => const SplashScreen(),
               settings: settings,
             );
           case '/adicionar':
@@ -58,4 +64,3 @@ class AppTarefas extends StatelessWidget {
     );
   }
 }
-

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 enum Prioridade { baixa, media, alta }
 
 class Tarefa {
+  final int? id;
   final String titulo;
   final String descricao;
   final Prioridade prioridade;
@@ -10,6 +11,7 @@ class Tarefa {
   final bool concluida;
 
   Tarefa({
+    this.id,
     required this.titulo,
     required this.descricao,
     this.prioridade = Prioridade.media,
@@ -37,5 +39,29 @@ class Tarefa {
       case Prioridade.alta:
         return Colors.redAccent;
     }
+  }
+
+  Map<String, dynamic> toMap() {
+    return <String, dynamic>{
+      'titulo': titulo,
+      'descricao': descricao,
+      'prioridade': prioridade.name,
+      'horas_estimadas': horasEstimadas,
+      'concluida': concluida ? 1 : 0,
+    };
+  }
+
+  static Tarefa fromMap(Map<String, dynamic> map) {
+    return Tarefa(
+      id: map['id'] as int?,
+      titulo: map['titulo'] as String,
+      descricao: map['descricao'] as String,
+      prioridade: Prioridade.values.firstWhere(
+        (Prioridade valor) => valor.name == map['prioridade'],
+        orElse: () => Prioridade.media,
+      ),
+      horasEstimadas: map['horas_estimadas'] as int,
+      concluida: (map['concluida'] as int) == 1,
+    );
   }
 }

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
+import 'database_helper.dart';
 import 'tarefa.dart';
 
 class PaginaListaTarefas extends StatefulWidget {
@@ -11,39 +13,104 @@ class PaginaListaTarefas extends StatefulWidget {
 
 class _EstadoPaginaListaTarefas extends State<PaginaListaTarefas> {
   final List<Tarefa> _tarefas = <Tarefa>[];
+  String _nomeUsuario = 'Usuário';
 
-  // Este trecho faz o processamento de adicionar e organizar as tarefas.
+  @override
+  void initState() {
+    super.initState();
+    _carregarDados();
+  }
 
-  void _abrirPaginaAdicionar() {
-    final ScaffoldMessengerState mensageiro = ScaffoldMessenger.of(context);
-    Navigator.pushNamed<Tarefa>(context, '/adicionar').then((novaTarefa) {
-      if (novaTarefa == null) return;
+  Future<void> _carregarDados() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final String nome = prefs.getString('nomeUsuario') ?? 'Usuário';
+    final List<Tarefa> tarefasSalvas = await DatabaseHelper.instance.listarTarefas();
 
-      setState(() {
-        _tarefas.add(novaTarefa);
-      });
+    if (!mounted) {
+      return;
+    }
 
-      mensageiro.showSnackBar(
-        SnackBar(
-          content: Text('Tarefa "${novaTarefa.titulo}" adicionada.'),
-          duration: const Duration(seconds: 2),
-        ),
-      );
+    setState(() {
+      _nomeUsuario = nome;
+      _tarefas
+        ..clear()
+        ..addAll(tarefasSalvas);
     });
   }
 
-  void _alternarConclusao(Tarefa tarefa) {
+  Future<void> _abrirPaginaAdicionar() async {
+    final ScaffoldMessengerState mensageiro = ScaffoldMessenger.of(context);
+    final Tarefa? novaTarefa = await Navigator.pushNamed<Tarefa>(context, '/adicionar');
+
+    if (novaTarefa == null) {
+      return;
+    }
+
+    final int idSalvo = await DatabaseHelper.instance.inserirTarefa(novaTarefa);
+    final Tarefa tarefaSalva = Tarefa(
+      id: idSalvo,
+      titulo: novaTarefa.titulo,
+      descricao: novaTarefa.descricao,
+      prioridade: novaTarefa.prioridade,
+      horasEstimadas: novaTarefa.horasEstimadas,
+      concluida: novaTarefa.concluida,
+    );
+
+    if (!mounted) {
+      return;
+    }
+
     setState(() {
-      final int index = _tarefas.indexWhere((item) => item.titulo == tarefa.titulo && item.descricao == tarefa.descricao);
-      if (index >= 0) {
-        _tarefas[index] = Tarefa(
-          titulo: tarefa.titulo,
-          descricao: tarefa.descricao,
-          prioridade: tarefa.prioridade,
-          horasEstimadas: tarefa.horasEstimadas,
-          concluida: !tarefa.concluida,
-        );
-      }
+      _tarefas.add(tarefaSalva);
+    });
+
+    mensageiro.showSnackBar(
+      SnackBar(
+        content: Text('Tarefa "${tarefaSalva.titulo}" adicionada.'),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  Future<void> _alternarConclusao(Tarefa tarefa) async {
+    final int index = _tarefas.indexWhere((item) => item.id == tarefa.id);
+    if (index < 0) {
+      return;
+    }
+
+    final Tarefa atualizada = Tarefa(
+      id: tarefa.id,
+      titulo: tarefa.titulo,
+      descricao: tarefa.descricao,
+      prioridade: tarefa.prioridade,
+      horasEstimadas: tarefa.horasEstimadas,
+      concluida: !tarefa.concluida,
+    );
+
+    await DatabaseHelper.instance.atualizarTarefa(atualizada);
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _tarefas[index] = atualizada;
+    });
+  }
+
+  Future<void> _deletarTarefa(Tarefa tarefa) async {
+    if (tarefa.id == null) {
+      return;
+    }
+
+    await DatabaseHelper.instance.deletarTarefa(tarefa.id!);
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _tarefas.removeWhere((item) => item.id == tarefa.id);
     });
   }
 
@@ -51,6 +118,7 @@ class _EstadoPaginaListaTarefas extends State<PaginaListaTarefas> {
     return _ItemTarefaAnimado(
       tarefa: tarefa,
       onToggle: () => _alternarConclusao(tarefa),
+      onDelete: () => _deletarTarefa(tarefa),
       onTap: () {
         Navigator.pushNamed(context, '/detalhes', arguments: tarefa);
       },
@@ -89,9 +157,9 @@ class _EstadoPaginaListaTarefas extends State<PaginaListaTarefas> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
-                      const Text(
-                        'Resumo rápido',
-                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                      Text(
+                        'Olá, $_nomeUsuario',
+                        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 8),
                       Text('Tarefas cadastradas: ${_tarefas.length}'),
@@ -143,11 +211,13 @@ class _EstadoPaginaListaTarefas extends State<PaginaListaTarefas> {
 class _ItemTarefaAnimado extends StatefulWidget {
   final Tarefa tarefa;
   final VoidCallback onToggle;
+  final VoidCallback onDelete;
   final VoidCallback onTap;
 
   const _ItemTarefaAnimado({
     required this.tarefa,
     required this.onToggle,
+    required this.onDelete,
     required this.onTap,
   });
 
@@ -223,6 +293,12 @@ class _ItemTarefaAnimadoState extends State<_ItemTarefaAnimado>
                   onPressed: widget.onToggle,
                   icon: Icon(widget.tarefa.concluida ? Icons.undo : Icons.check_circle_outline),
                   color: widget.tarefa.concluida ? Colors.orange : Colors.green,
+                ),
+                IconButton(
+                  tooltip: 'Excluir tarefa',
+                  onPressed: widget.onDelete,
+                  icon: const Icon(Icons.delete_outline),
+                  color: Colors.redAccent,
                 ),
               ],
             ),

@@ -37,8 +37,9 @@ class AppTarefas extends StatelessWidget {
               settings: settings,
             );
           case '/adicionar':
+            final Tarefa? tarefa = settings.arguments is Tarefa ? settings.arguments as Tarefa : null;
             return MaterialPageRoute<Tarefa>(
-              builder: (BuildContext context) => const PaginaAdicionarTarefa(),
+              builder: (BuildContext context) => PaginaAdicionarTarefa(tarefa: tarefa),
               settings: settings,
             );
           case '/resumo':

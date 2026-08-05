@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'tarefa.dart';
 
 class PaginaAdicionarTarefa extends StatefulWidget {
-  const PaginaAdicionarTarefa({super.key});
+  const PaginaAdicionarTarefa({super.key, this.tarefa});
+
+  final Tarefa? tarefa;
 
   @override
   State<PaginaAdicionarTarefa> createState() => _EstadoPaginaAdicionarTarefa();
@@ -15,22 +17,36 @@ class _EstadoPaginaAdicionarTarefa extends State<PaginaAdicionarTarefa> {
   final TextEditingController _horas = TextEditingController(text: '1');
   Prioridade _prioridade = Prioridade.media;
 
+  @override
+  void initState() {
+    super.initState();
+    if (widget.tarefa != null) {
+      _titulo.text = widget.tarefa!.titulo;
+      _descricao.text = widget.tarefa!.descricao;
+      _horas.text = widget.tarefa!.horasEstimadas.toString();
+      _prioridade = widget.tarefa!.prioridade;
+    }
+  }
+
   void _salvar() {
     final int horas = int.tryParse(_horas.text) ?? 1;
     final Tarefa tarefa = Tarefa(
+      id: widget.tarefa?.id,
       titulo: _titulo.text,
       descricao: _descricao.text,
       prioridade: _prioridade,
       horasEstimadas: horas,
+      concluida: widget.tarefa?.concluida ?? false,
     );
     Navigator.pop(context, tarefa);
   }
 
   @override
   Widget build(BuildContext context) {
+    final bool isEdicao = widget.tarefa != null;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Adicionar Tarefa'),
+        title: Text(isEdicao ? 'Editar Tarefa' : 'Adicionar Tarefa'),
         centerTitle: true,
       ),
       body: Container(
@@ -46,9 +62,9 @@ class _EstadoPaginaAdicionarTarefa extends State<PaginaAdicionarTarefa> {
           padding: const EdgeInsets.all(16),
           child: ListView(
             children: <Widget>[
-              const Text(
-                'Cadastre sua nova tarefa',
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+              Text(
+                isEdicao ? 'Atualize os dados da tarefa' : 'Cadastre sua nova tarefa',
+                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 16),
               TextFormField(
@@ -105,7 +121,7 @@ class _EstadoPaginaAdicionarTarefa extends State<PaginaAdicionarTarefa> {
               ElevatedButton.icon(
                 onPressed: _salvar,
                 icon: const Icon(Icons.save_alt),
-                label: const Text('Salvar tarefa'),
+                label: Text(isEdicao ? 'Atualizar tarefa' : 'Salvar tarefa'),
               ),
             ],
           ),

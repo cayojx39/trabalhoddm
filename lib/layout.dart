@@ -98,6 +98,61 @@ class _EstadoPaginaListaTarefas extends State<PaginaListaTarefas> {
     });
   }
 
+  Future<void> _editarTarefa(Tarefa tarefa) async {
+    final Tarefa? tarefaAtualizada = await Navigator.pushNamed<Tarefa>(
+      context,
+      '/adicionar',
+      arguments: tarefa,
+    );
+
+    if (tarefaAtualizada == null) {
+      return;
+    }
+
+    await DatabaseHelper.instance.atualizarTarefa(tarefaAtualizada);
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      final int index = _tarefas.indexWhere((item) => item.id == tarefaAtualizada.id);
+      if (index >= 0) {
+        _tarefas[index] = tarefaAtualizada;
+      }
+    });
+  }
+
+  Future<void> _confirmarExclusao(Tarefa tarefa) async {
+    final bool? resultado = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+          title: const Text('Confirmar exclusão'),
+          content: Text('Deseja realmente excluir a tarefa "${tarefa.titulo}"?'),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.redAccent,
+              ),
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Excluir'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (resultado == true) {
+      await _deletarTarefa(tarefa);
+    }
+  }
+
   Future<void> _deletarTarefa(Tarefa tarefa) async {
     if (tarefa.id == null) {
       return;
@@ -112,16 +167,101 @@ class _EstadoPaginaListaTarefas extends State<PaginaListaTarefas> {
     setState(() {
       _tarefas.removeWhere((item) => item.id == tarefa.id);
     });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Tarefa "${tarefa.titulo}" excluída com sucesso.'),
+        duration: const Duration(seconds: 2),
+        backgroundColor: Colors.redAccent,
+      ),
+    );
   }
 
-  Widget _construirItemTarefa(Tarefa tarefa, int indice) {
-    return _ItemTarefaAnimado(
-      tarefa: tarefa,
-      onToggle: () => _alternarConclusao(tarefa),
-      onDelete: () => _deletarTarefa(tarefa),
-      onTap: () {
-        Navigator.pushNamed(context, '/detalhes', arguments: tarefa);
-      },
+  Widget _construirTabelaTarefas() {
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFFF4F7FF),
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: <BoxShadow>[
+          BoxShadow(
+            color: Colors.black.withAlpha(15),
+            blurRadius: 14,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: DataTable(
+          border: TableBorder.symmetric(
+            inside: const BorderSide(color: Color(0xFFDFE4F5), width: 1),
+            outside: const BorderSide(color: Color(0xFFDFE4F5), width: 1),
+          ),
+          headingRowColor: WidgetStateProperty.resolveWith<Color?>((Set<WidgetState> states) {
+            return const Color(0xFFE8EEF9);
+          }),
+          headingTextStyle: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF1F3B72)),
+          dataRowColor: WidgetStateProperty.resolveWith<Color?>((Set<WidgetState> states) {
+            return Colors.white;
+          }),
+          dataTextStyle: const TextStyle(color: Color(0xFF243656)),
+          dividerThickness: 1,
+          columns: const <DataColumn>[
+            DataColumn(label: Text('Título')),
+            DataColumn(label: Text('Prioridade')),
+            DataColumn(label: Text('Horas')),
+            DataColumn(label: Text('Status')),
+            DataColumn(label: Text('Ações')),
+          ],
+          rows: _tarefas.map((Tarefa tarefa) {
+            return DataRow(
+              cells: <DataCell>[
+                DataCell(
+                  Text(tarefa.titulo, style: const TextStyle(fontWeight: FontWeight.w600)),
+                  onTap: () => Navigator.pushNamed(context, '/detalhes', arguments: tarefa),
+                ),
+                DataCell(Text(tarefa.prioridadeTexto)),
+                DataCell(Text('${tarefa.horasEstimadas}h')),
+                DataCell(
+                  Chip(
+                    label: Text(
+                      tarefa.concluida ? 'Concluída' : 'Pendente',
+                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                    ),
+                    backgroundColor: tarefa.concluida ? Colors.green.shade100 : Colors.orange.shade100,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+                DataCell(
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      IconButton(
+                        tooltip: tarefa.concluida ? 'Marcar como pendente' : 'Marcar como concluída',
+                        icon: Icon(tarefa.concluida ? Icons.undo : Icons.check_circle_outline),
+                        color: tarefa.concluida ? Colors.orange : Colors.green,
+                        onPressed: () => _alternarConclusao(tarefa),
+                      ),
+                      IconButton(
+                        tooltip: 'Editar tarefa',
+                        icon: const Icon(Icons.edit_outlined),
+                        color: Colors.blue.shade700,
+                        onPressed: () => _editarTarefa(tarefa),
+                      ),
+                      IconButton(
+                        tooltip: 'Excluir tarefa',
+                        icon: const Icon(Icons.delete_outline),
+                        color: Colors.redAccent,
+                        onPressed: () => _confirmarExclusao(tarefa),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            );
+          }).toList(),
+        ),
+      ),
     );
   }
 
@@ -188,11 +328,8 @@ class _EstadoPaginaListaTarefas extends State<PaginaListaTarefas> {
                     ? const Center(
                         child: Text('Nenhuma tarefa cadastrada ainda.'),
                       )
-                    : ListView.builder(
-                        itemCount: _tarefas.length,
-                        itemBuilder: (BuildContext context, int index) {
-                          return _construirItemTarefa(_tarefas[index], index);
-                        },
+                    : SingleChildScrollView(
+                        child: _construirTabelaTarefas(),
                       ),
               ),
             ],

@@ -64,6 +64,22 @@ class DatabaseHelper {
     return maps.map(Tarefa.fromMap).toList();
   }
 
+  // Busca uma tarefa específica pelo ID (usado para recuperar a última tarefa acessada)
+  Future<Tarefa?> obterTarefaPorId(int id) async {
+    final Database db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      tableTarefas,
+      where: '$columnId = ?',
+      whereArgs: <Object?>[id],
+    );
+    
+    if (maps.isEmpty) {
+      return null;
+    }
+    
+    return Tarefa.fromMap(maps.first);
+  }
+
   Future<int> atualizarTarefa(Tarefa tarefa) async {
     if (tarefa.id == null) {
       return 0;

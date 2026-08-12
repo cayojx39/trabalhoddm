@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'database_helper.dart';
+import 'preferences_helper.dart'; // Importa helper para gerenciar últimas tarefas acessadas
 import 'tarefa.dart';
 
 class PaginaListaTarefas extends StatefulWidget {
@@ -218,7 +219,13 @@ class _EstadoPaginaListaTarefas extends State<PaginaListaTarefas> {
               cells: <DataCell>[
                 DataCell(
                   Text(tarefa.titulo, style: const TextStyle(fontWeight: FontWeight.w600)),
-                  onTap: () => Navigator.pushNamed(context, '/detalhes', arguments: tarefa),
+                  onTap: () async {
+                    // Salva o ID da tarefa clicada para recuperar na próxima abertura do app
+                    await PreferencesHelper.salvarUltimaTarefaId(tarefa.id);
+                    if (mounted) {
+                      Navigator.pushNamed(context, '/detalhes', arguments: tarefa);
+                    }
+                  },
                 ),
                 DataCell(Text(tarefa.prioridadeTexto)),
                 DataCell(Text('${tarefa.horasEstimadas}h')),

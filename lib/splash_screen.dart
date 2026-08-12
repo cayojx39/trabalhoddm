@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'database_helper.dart'; // Importa para buscar tarefa pelo ID
+import 'preferences_helper.dart'; // Importa para recuperar ID da última tarefa
+import 'tarefa.dart';
+
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -37,6 +41,25 @@ class _SplashScreenState extends State<SplashScreen> {
       return;
     }
 
+    // Recupera o ID da última tarefa visualizada pelo usuário
+    final int? ultimaTarefaId = await PreferencesHelper.obterUltimaTarefaId();
+    
+    if (ultimaTarefaId != null) {
+      // Busca os dados da tarefa no banco de dados
+      final Tarefa? tarefa = await DatabaseHelper.instance.obterTarefaPorId(ultimaTarefaId);
+      
+      if (!mounted) {
+        return;
+      }
+      
+      if (tarefa != null) {
+        // Navega direto para os detalhes da última tarefa acessada
+        Navigator.of(context).pushReplacementNamed('/detalhes', arguments: tarefa);
+        return;
+      }
+    }
+
+    // Se não há última tarefa, mostra a lista normal de tarefas
     Navigator.of(context).pushReplacementNamed('/');
   }
 

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'database_helper.dart'; // Importa para buscar tarefa pelo ID
-import 'preferences_helper.dart'; // Importa para recuperar ID da última tarefa
+import 'api/api_service.dart';
+import 'api/feriado.dart';
+import 'database_helper.dart';
+import 'preferences_helper.dart';
 import 'tarefa.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -27,12 +29,27 @@ class _SplashScreenState extends State<SplashScreen> {
     await prefs.setString('nomeUsuario', nome);
     await prefs.setString('ultimaVisita', DateTime.now().toIso8601String());
 
+    String statusFeriados = 'Atualizando feriados...';
+    try {
+      final List<Feriado> feriados = await ApiService.instance.buscarFeriados(
+        ano: DateTime.now().year,
+      );
+      await DatabaseHelper.instance.salvarFeriados(feriados);
+      statusFeriados = 'Feriados atualizados';
+    } on ApiException catch (error) {
+      final List<Feriado> feriadosSalvos =
+          await DatabaseHelper.instance.listarFeriados();
+      statusFeriados = feriadosSalvos.isEmpty
+          ? 'Feriados indisponíveis: ${error.message}'
+          : 'Sem conexão; usando feriados salvos';
+    }
+
     if (!mounted) {
       return;
     }
 
     setState(() {
-      _mensagem = 'Olá, $nome!';
+      _mensagem = 'Olá, $nome! $statusFeriados';
     });
 
     await Future<void>.delayed(const Duration(milliseconds: 1400));
@@ -57,6 +74,10 @@ class _SplashScreenState extends State<SplashScreen> {
         Navigator.of(context).pushReplacementNamed('/detalhes', arguments: tarefa);
         return;
       }
+    }
+
+    if (!mounted) {
+      return;
     }
 
     // Se não há última tarefa, mostra a lista normal de tarefas

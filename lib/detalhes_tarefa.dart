@@ -35,14 +35,25 @@ class PaginaDetalhesTarefa extends StatelessWidget {
                   children: <Widget>[
                     Text(
                       tarefa.titulo,
-                      style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     const SizedBox(height: 10),
                     Text(tarefa.descricao),
+                    if (tarefa.dataEntrega != null) ...<Widget>[
+                      const SizedBox(height: 12),
+                      Text(
+                        'Data de entrega: ${tarefa.dataEntrega!.day.toString().padLeft(2, '0')}/${tarefa.dataEntrega!.month.toString().padLeft(2, '0')}/${tarefa.dataEntrega!.year}',
+                      ),
+                    ],
                     const SizedBox(height: 16),
                     Row(
                       children: <Widget>[
-                        Chip(label: Text('Prioridade: ${tarefa.prioridadeTexto}')),
+                        Chip(
+                          label: Text('Prioridade: ${tarefa.prioridadeTexto}'),
+                        ),
                         const SizedBox(width: 8),
                         Chip(label: Text('Horas: ${tarefa.horasEstimadas}h')),
                       ],
@@ -53,7 +64,9 @@ class PaginaDetalhesTarefa extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              tarefa.concluida ? 'Esta tarefa já foi concluída.' : 'Ainda está pendente.',
+              tarefa.concluida
+                  ? 'Esta tarefa já foi concluída.'
+                  : 'Ainda está pendente.',
               style: TextStyle(
                 fontSize: 16,
                 color: tarefa.concluida ? Colors.green : Colors.orange,

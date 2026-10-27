@@ -1,17 +1,22 @@
-# trabalhoddm
+# Lista de Tarefas
 
-A new Flutter project.
+Aplicativo Flutter para cadastrar, priorizar e acompanhar tarefas, com persistência
+local em SQLite e preferências do usuário.
 
-## Getting Started
+## Feriados públicos
 
-This project is a starting point for a Flutter application.
+O app consulta a API pública [Nager.Date](https://date.nager.at/) sem chave de
+acesso, usando os feriados do Brasil para o ano atual e o seguinte. Somente
+feriados nacionais (`global == true`) são exibidos. Os resultados são armazenados
+na tabela `feriados` do SQLite para consulta offline.
 
-A few resources to get you started if this is your first Flutter project:
+Na tela de cadastro, a data de entrega é opcional. Se ela coincidir com um
+feriado salvo, o app exibe um aviso, mas permite salvar a tarefa. A lista e o
+resumo também destacam entregas próximas de feriados.
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+## Executar
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+```shell
+flutter pub get
+flutter run
+```

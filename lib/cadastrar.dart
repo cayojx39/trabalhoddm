@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'api/feriado.dart';
+import 'database_helper.dart';
 import 'tarefa.dart';
 
 class PaginaAdicionarTarefa extends StatefulWidget {
@@ -16,6 +18,8 @@ class _EstadoPaginaAdicionarTarefa extends State<PaginaAdicionarTarefa> {
   final TextEditingController _descricao = TextEditingController();
   final TextEditingController _horas = TextEditingController(text: '1');
   Prioridade _prioridade = Prioridade.media;
+  DateTime? _dataEntrega;
+  Feriado? _feriadoNaData;
 
   @override
   void initState() {
@@ -25,6 +29,49 @@ class _EstadoPaginaAdicionarTarefa extends State<PaginaAdicionarTarefa> {
       _descricao.text = widget.tarefa!.descricao;
       _horas.text = widget.tarefa!.horasEstimadas.toString();
       _prioridade = widget.tarefa!.prioridade;
+      _dataEntrega = widget.tarefa!.dataEntrega;
+      _carregarFeriadoNaData();
+    }
+  }
+
+  @override
+  void dispose() {
+    _titulo.dispose();
+    _descricao.dispose();
+    _horas.dispose();
+    super.dispose();
+  }
+
+  Future<void> _selecionarDataEntrega() async {
+    final DateTime hoje = DateTime.now();
+    final DateTime? data = await showDatePicker(
+      context: context,
+      initialDate: _dataEntrega ?? hoje,
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
+      helpText: 'Selecione a data de entrega',
+    );
+    if (data == null) {
+      return;
+    }
+    setState(() {
+      _dataEntrega = data;
+      _feriadoNaData = null;
+    });
+    await _carregarFeriadoNaData();
+  }
+
+  Future<void> _carregarFeriadoNaData() async {
+    final DateTime? data = _dataEntrega;
+    if (data == null) {
+      return;
+    }
+    final Feriado? feriado =
+        await DatabaseHelper.instance.obterFeriadoPorData(data);
+    if (mounted && data == _dataEntrega) {
+      setState(() {
+        _feriadoNaData = feriado;
+      });
     }
   }
 
@@ -37,6 +84,7 @@ class _EstadoPaginaAdicionarTarefa extends State<PaginaAdicionarTarefa> {
       prioridade: _prioridade,
       horasEstimadas: horas,
       concluida: widget.tarefa?.concluida ?? false,
+      dataEntrega: _dataEntrega,
     );
     Navigator.pop(context, tarefa);
   }
@@ -117,6 +165,41 @@ class _EstadoPaginaAdicionarTarefa extends State<PaginaAdicionarTarefa> {
                   prefixIcon: Icon(Icons.access_time),
                 ),
               ),
+              const SizedBox(height: 14),
+              OutlinedButton.icon(
+                onPressed: _selecionarDataEntrega,
+                icon: const Icon(Icons.calendar_today),
+                label: Text(
+                  _dataEntrega == null
+                      ? 'Definir data de entrega (opcional)'
+                      : 'Entrega: ${_formatarData(_dataEntrega!)}',
+                ),
+              ),
+              if (_dataEntrega != null)
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton.icon(
+                    onPressed: () {
+                      setState(() {
+                        _dataEntrega = null;
+                        _feriadoNaData = null;
+                      });
+                    },
+                    icon: const Icon(Icons.close),
+                    label: const Text('Remover data de entrega'),
+                  ),
+                ),
+              if (_feriadoNaData != null)
+                Card(
+                  color: Colors.amber.shade100,
+                  child: ListTile(
+                    leading: const Icon(Icons.celebration_outlined),
+                    title: Text('Atenção: ${_feriadoNaData!.localName}'),
+                    subtitle: const Text(
+                      'A data escolhida é um feriado. Você ainda pode salvar a tarefa.',
+                    ),
+                  ),
+                ),
               const SizedBox(height: 24),
               ElevatedButton.icon(
                 onPressed: _salvar,
@@ -128,5 +211,11 @@ class _EstadoPaginaAdicionarTarefa extends State<PaginaAdicionarTarefa> {
         ),
       ),
     );
+  }
+
+  String _formatarData(DateTime data) {
+    final String dia = data.day.toString().padLeft(2, '0');
+    final String mes = data.month.toString().padLeft(2, '0');
+    return '$dia/$mes/${data.year}';
   }
 }

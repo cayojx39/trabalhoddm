@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'api/feriado.dart';
 import 'database_helper.dart';
 import 'preferences_helper.dart'; // Importa helper para gerenciar últimas tarefas acessadas
 import 'tarefa.dart';
@@ -14,6 +15,7 @@ class PaginaListaTarefas extends StatefulWidget {
 
 class _EstadoPaginaListaTarefas extends State<PaginaListaTarefas> {
   final List<Tarefa> _tarefas = <Tarefa>[];
+  List<Feriado> _feriados = <Feriado>[];
   String _nomeUsuario = 'Usuário';
 
   @override
@@ -26,6 +28,8 @@ class _EstadoPaginaListaTarefas extends State<PaginaListaTarefas> {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     final String nome = prefs.getString('nomeUsuario') ?? 'Usuário';
     final List<Tarefa> tarefasSalvas = await DatabaseHelper.instance.listarTarefas();
+    final List<Feriado> feriadosSalvos =
+        await DatabaseHelper.instance.listarFeriados();
 
     if (!mounted) {
       return;
@@ -36,6 +40,7 @@ class _EstadoPaginaListaTarefas extends State<PaginaListaTarefas> {
       _tarefas
         ..clear()
         ..addAll(tarefasSalvas);
+      _feriados = feriadosSalvos;
     });
   }
 
@@ -55,6 +60,7 @@ class _EstadoPaginaListaTarefas extends State<PaginaListaTarefas> {
       prioridade: novaTarefa.prioridade,
       horasEstimadas: novaTarefa.horasEstimadas,
       concluida: novaTarefa.concluida,
+      dataEntrega: novaTarefa.dataEntrega,
     );
 
     if (!mounted) {
@@ -86,6 +92,7 @@ class _EstadoPaginaListaTarefas extends State<PaginaListaTarefas> {
       prioridade: tarefa.prioridade,
       horasEstimadas: tarefa.horasEstimadas,
       concluida: !tarefa.concluida,
+      dataEntrega: tarefa.dataEntrega,
     );
 
     await DatabaseHelper.instance.atualizarTarefa(atualizada);
@@ -211,6 +218,7 @@ class _EstadoPaginaListaTarefas extends State<PaginaListaTarefas> {
             DataColumn(label: Text('Título')),
             DataColumn(label: Text('Prioridade')),
             DataColumn(label: Text('Horas')),
+            DataColumn(label: Text('Entrega')),
             DataColumn(label: Text('Status')),
             DataColumn(label: Text('Ações')),
           ],
@@ -229,6 +237,7 @@ class _EstadoPaginaListaTarefas extends State<PaginaListaTarefas> {
                 ),
                 DataCell(Text(tarefa.prioridadeTexto)),
                 DataCell(Text('${tarefa.horasEstimadas}h')),
+                DataCell(_construirCelulaEntrega(tarefa)),
                 DataCell(
                   Chip(
                     label: Text(
@@ -269,6 +278,34 @@ class _EstadoPaginaListaTarefas extends State<PaginaListaTarefas> {
           }).toList(),
         ),
       ),
+    );
+  }
+
+  Widget _construirCelulaEntrega(Tarefa tarefa) {
+    final DateTime? data = tarefa.dataEntrega;
+    if (data == null) {
+      return const Text('—');
+    }
+
+    final Feriado? feriado = feriadoProximo(data, _feriados);
+    final String dataFormatada =
+        '${data.day.toString().padLeft(2, '0')}/${data.month.toString().padLeft(2, '0')}/${data.year}';
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Text(dataFormatada),
+        if (feriado != null)
+          Chip(
+            avatar: const Icon(Icons.celebration, size: 16),
+            label: Text(
+              'Perto de ${feriado.localName}',
+              style: const TextStyle(fontSize: 11),
+            ),
+            visualDensity: VisualDensity.compact,
+            backgroundColor: Colors.amber.shade100,
+          ),
+      ],
     );
   }
 

@@ -4,6 +4,7 @@ import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
 
+import 'api/feriado.dart';
 import 'tarefa.dart';
 
 class DatabaseHelper {
@@ -13,14 +14,16 @@ class DatabaseHelper {
 
   static Database? _database;
   static const String _databaseName = 'tarefas.db';
-  static const int _databaseVersion = 1;
+  static const int _databaseVersion = 2;
   static const String tableTarefas = 'tarefas';
+  static const String tableFeriados = 'feriados';
   static const String columnId = 'id';
   static const String columnTitulo = 'titulo';
   static const String columnDescricao = 'descricao';
   static const String columnPrioridade = 'prioridade';
   static const String columnHorasEstimadas = 'horas_estimadas';
   static const String columnConcluida = 'concluida';
+  static const String columnDataEntrega = 'data_entrega';
 
   Future<Database> get database async {
     if (_database != null) {
@@ -34,7 +37,12 @@ class DatabaseHelper {
   Future<Database> _initDatabase() async {
     final Directory documentsDirectory = await getApplicationDocumentsDirectory();
     final String path = join(documentsDirectory.path, _databaseName);
-    return openDatabase(path, version: _databaseVersion, onCreate: _onCreate);
+    return openDatabase(
+      path,
+      version: _databaseVersion,
+      onCreate: _onCreate,
+      onUpgrade: _onUpgrade,
+    );
   }
 
   Future<void> _onCreate(Database db, int version) async {
@@ -45,7 +53,32 @@ class DatabaseHelper {
         $columnDescricao TEXT NOT NULL,
         $columnPrioridade TEXT NOT NULL,
         $columnHorasEstimadas INTEGER NOT NULL,
-        $columnConcluida INTEGER NOT NULL
+        $columnConcluida INTEGER NOT NULL,
+        $columnDataEntrega TEXT
+      )
+    ''');
+    await _criarTabelaFeriados(db);
+  }
+
+  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      await db.execute(
+        'ALTER TABLE $tableTarefas ADD COLUMN $columnDataEntrega TEXT',
+      );
+      await _criarTabelaFeriados(db);
+    }
+  }
+
+  Future<void> _criarTabelaFeriados(DatabaseExecutor db) async {
+    await db.execute('''
+      CREATE TABLE $tableFeriados (
+        date TEXT PRIMARY KEY,
+        local_name TEXT NOT NULL,
+        name TEXT NOT NULL,
+        country_code TEXT NOT NULL,
+        global INTEGER NOT NULL,
+        counties TEXT,
+        types TEXT NOT NULL
       )
     ''');
   }
@@ -102,4 +135,5 @@ class DatabaseHelper {
       whereArgs: <Object?>[id],
     );
   }
-}
+
+  

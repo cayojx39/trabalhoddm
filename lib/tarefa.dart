@@ -9,6 +9,7 @@ class Tarefa {
   final Prioridade prioridade;
   final int horasEstimadas;
   final bool concluida;
+  final DateTime? dataEntrega;
 
   Tarefa({
     this.id,
@@ -17,6 +18,7 @@ class Tarefa {
     this.prioridade = Prioridade.media,
     this.horasEstimadas = 1,
     this.concluida = false,
+    this.dataEntrega,
   });
 
   String get prioridadeTexto {
@@ -48,6 +50,11 @@ class Tarefa {
       'prioridade': prioridade.name,
       'horas_estimadas': horasEstimadas,
       'concluida': concluida ? 1 : 0,
+      'data_entrega': dataEntrega == null
+          ? null
+          : DateTime(dataEntrega!.year, dataEntrega!.month, dataEntrega!.day)
+              .toIso8601String()
+              .substring(0, 10),
     };
   }
 
@@ -62,6 +69,9 @@ class Tarefa {
       ),
       horasEstimadas: map['horas_estimadas'] as int,
       concluida: (map['concluida'] as int) == 1,
+      dataEntrega: map['data_entrega'] == null
+          ? null
+          : DateTime.parse(map['data_entrega'] as String),
     );
   }
 }

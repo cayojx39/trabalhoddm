@@ -136,4 +136,38 @@ class DatabaseHelper {
     );
   }
 
-  
+  Future<void> salvarFeriados(List<Feriado> feriados) async {
+    final Database db = await database;
+    final Batch batch = db.batch();
+    for (final Feriado feriado in feriados) {
+      batch.insert(
+        tableFeriados,
+        feriado.toMap(),
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+    }
+    await batch.commit(noResult: true);
+  }
+
+  Future<List<Feriado>> listarFeriados() async {
+    final Database db = await database;
+    final List<Map<String, Object?>> maps = await db.query(
+      tableFeriados,
+      orderBy: 'date ASC',
+    );
+    return maps.map(Feriado.fromMap).toList();
+  }
+
+  Future<Feriado?> obterFeriadoPorData(DateTime data) async {
+    final Database db = await database;
+    final String dataFormatada =
+        DateTime(data.year, data.month, data.day).toIso8601String().substring(0, 10);
+    final List<Map<String, Object?>> maps = await db.query(
+      tableFeriados,
+      where: 'date = ?',
+      whereArgs: <Object?>[dataFormatada],
+      limit: 1,
+    );
+    return maps.isEmpty ? null : Feriado.fromMap(maps.first);
+  }
+}

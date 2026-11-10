@@ -1,0 +1,15 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "trabalhoddm (Chrome)",
+      "request": "launch",
+      "type": "dart",
+      "deviceId": "chrome",
+      "toolArgs": [
+        "--web-port",
+        "55226"
+      ]
+    }
+  ]
+}

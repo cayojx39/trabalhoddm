@@ -287,26 +287,72 @@ class _EstadoPaginaListaTarefas extends State<PaginaListaTarefas> {
       return const Text('—');
     }
 
-    final Feriado? feriado = feriadoProximo(data, _feriados);
+    final Feriado? feriado = _buscarFeriadoNaData(data);
     final String dataFormatada =
         '${data.day.toString().padLeft(2, '0')}/${data.month.toString().padLeft(2, '0')}/${data.year}';
+    final Color corIndicador = feriado == null
+        ? Colors.green
+        : Colors.deepOrange;
+    final String textoIndicador = feriado == null
+        ? 'Sem feriado'
+        : 'Feriado: ${feriado.localName}';
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         Text(dataFormatada),
-        if (feriado != null)
-          Chip(
-            avatar: const Icon(Icons.celebration, size: 16),
-            label: Text(
-              'Perto de ${feriado.localName}',
-              style: const TextStyle(fontSize: 11),
+        const SizedBox(height: 2),
+        Tooltip(
+          message: textoIndicador,
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 160),
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(
+              color: corIndicador.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: corIndicador.withValues(alpha: 0.35)),
             ),
-            visualDensity: VisualDensity.compact,
-            backgroundColor: Colors.amber.shade100,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                Icon(
+                  feriado == null
+                      ? Icons.check_circle_outline
+                      : Icons.celebration_outlined,
+                  size: 12,
+                  color: corIndicador,
+                ),
+                const SizedBox(width: 4),
+                Flexible(
+                  child: Text(
+                    textoIndicador,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: corIndicador,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
+        ),
       ],
     );
+  }
+
+  Feriado? _buscarFeriadoNaData(DateTime data) {
+    for (final Feriado feriado in _feriados) {
+      if (feriado.date.year == data.year &&
+          feriado.date.month == data.month &&
+          feriado.date.day == data.day) {
+        return feriado;
+      }
+    }
+    return null;
   }
 
   @override

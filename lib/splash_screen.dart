@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -29,59 +31,41 @@ class _SplashScreenState extends State<SplashScreen> {
     await prefs.setString('nomeUsuario', nome);
     await prefs.setString('ultimaVisita', DateTime.now().toIso8601String());
 
-    String statusFeriados = 'Atualizando feriados...';
-    try {
-      final List<Feriado> feriados = await ApiService.instance.buscarFeriados(
-        ano: DateTime.now().year,
-      );
-      await DatabaseHelper.instance.salvarFeriados(feriados);
-      statusFeriados = 'Feriados atualizados';
-    } on ApiException catch (error) {
-      final List<Feriado> feriadosSalvos =
-          await DatabaseHelper.instance.listarFeriados();
-      statusFeriados = feriadosSalvos.isEmpty
-          ? 'Feriados indisponíveis: ${error.message}'
-          : 'Sem conexão; usando feriados salvos';
-    }
-
     if (!mounted) {
       return;
     }
 
     setState(() {
-      _mensagem = 'Olá, $nome! $statusFeriados';
+      _mensagem = 'Olá, $nome!';
     });
 
-    await Future<void>.delayed(const Duration(milliseconds: 1400));
-
-    if (!mounted) {
-      return;
-    }
-
-    // Recupera o ID da última tarefa visualizada pelo usuário
     final int? ultimaTarefaId = await PreferencesHelper.obterUltimaTarefaId();
-    
+    Tarefa? tarefa;
     if (ultimaTarefaId != null) {
-      // Busca os dados da tarefa no banco de dados
-      final Tarefa? tarefa = await DatabaseHelper.instance.obterTarefaPorId(ultimaTarefaId);
-      
-      if (!mounted) {
-        return;
-      }
-      
-      if (tarefa != null) {
-        // Navega direto para os detalhes da última tarefa acessada
-        Navigator.of(context).pushReplacementNamed('/detalhes', arguments: tarefa);
-        return;
-      }
+      tarefa = await DatabaseHelper.instance.obterTarefaPorId(ultimaTarefaId);
     }
 
     if (!mounted) {
       return;
     }
 
-    // Se não há última tarefa, mostra a lista normal de tarefas
-    Navigator.of(context).pushReplacementNamed('/');
+    unawaited(_atualizarFeriados());
+    if (tarefa != null) {
+      Navigator.of(context).pushReplacementNamed('/detalhes', arguments: tarefa);
+    } else {
+      Navigator.of(context).pushReplacementNamed('/');
+    }
+  }
+
+  Future<void> _atualizarFeriados() async {
+    try {
+      final List<Feriado> feriados = await ApiService.instance.buscarFeriados(
+        ano: DateTime.now().year,
+      );
+      await DatabaseHelper.instance.salvarFeriados(feriados);
+    } on ApiException catch (error) {
+      debugPrint('Não foi possível atualizar os feriados: ${error.message}');
+    }
   }
 
   @override

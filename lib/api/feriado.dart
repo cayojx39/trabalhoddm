@@ -19,6 +19,7 @@ class Feriado {
     this.types = const <String>[],
   });
 
+  // Converte os campos recebidos da API para um objeto de feriado.
   factory Feriado.fromJson(Map<String, dynamic> json) {
     final Object? rawDate = json['date'];
     if (rawDate is! String || DateTime.tryParse(rawDate) == null) {
@@ -36,6 +37,7 @@ class Feriado {
     );
   }
 
+  // Reconstrói um feriado salvo no SQLite.
   factory Feriado.fromMap(Map<String, Object?> map) {
     return Feriado(
       date: DateTime.parse(map['date']! as String),
@@ -50,6 +52,7 @@ class Feriado {
     );
   }
 
+  // Prepara os campos do feriado para armazenamento no SQLite.
   Map<String, Object?> toMap() {
     return <String, Object?>{
       'date': _dateOnly(date),
@@ -68,6 +71,7 @@ class Feriado {
   }
 }
 
+// Busca o feriado mais próximo dentro do limite de dias definido.
 Feriado? feriadoProximo(
   DateTime? data,
   Iterable<Feriado> feriados, {

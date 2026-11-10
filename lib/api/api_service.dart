@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 
 import 'feriado.dart';
 
+// Representa falhas de conexão, resposta ou dados da API.
 class ApiException implements Exception {
   final String message;
 
@@ -17,11 +18,14 @@ class ApiException implements Exception {
 class ApiService {
   ApiService({http.Client? client}) : _client = client ?? http.Client();
 
+  // Compartilha o serviço HTTP usado para consultar os feriados.
   static final ApiService instance = ApiService();
 
   final http.Client _client;
+  // Evita que uma resposta lenta mantenha a consulta aberta por muito tempo.
   static const Duration _timeout = Duration(seconds: 10);
 
+  // Busca feriados deste ano e do próximo para cobrir datas futuras.
   Future<List<Feriado>> buscarFeriados({required int ano}) async {
     try {
       final List<List<Feriado>> feriadosPorAno = await Future.wait(
@@ -31,6 +35,7 @@ class ApiService {
         ],
       );
       final Map<String, Feriado> feriadosUnicos = <String, Feriado>{};
+      // Mantém apenas feriados nacionais e remove datas duplicadas.
       for (final List<Feriado> lista in feriadosPorAno) {
         for (final Feriado feriado in lista) {
           if (feriado.global) {
@@ -52,6 +57,7 @@ class ApiService {
   }
 
   Future<List<Feriado>> _buscarFeriadosDoAno(int ano) async {
+    // Consulta a lista de feriados públicos do Brasil para o ano informado.
     final Uri uri = Uri.https(
       'date.nager.at',
       '/api/v3/PublicHolidays/$ano/BR',
@@ -63,6 +69,7 @@ class ApiService {
       );
     }
 
+    // Converte a resposta JSON em objetos de feriado.
     final Object? decoded = jsonDecode(response.body);
     if (decoded is! List<dynamic>) {
       throw const FormatException('A resposta de feriados não é uma lista.');

@@ -18,5 +18,10 @@ resumo também destacam entregas próximas de feriados.
 
 ```shell
 flutter pub get
-flutter run
 ```
+
+No VS Code, selecione **trabalhoddm (Chrome)** na lista de configurações de
+execução e pressione `F5`. O projeto usa sempre `localhost:55226`, então os
+dados locais do navegador continuam disponíveis entre execuções. Evite iniciar
+com uma porta aleatória ou abrir por `127.0.0.1`, pois o navegador trata esses
+endereços como armazenamentos separados.
